@@ -7,11 +7,20 @@ import numpy as np
 import os
 
 # READ CONFIG FILE
-with open("preprcess_config.yaml", "r") as yamlfile:
-    data = yaml.load(yamlfile, Loader=yaml.SafeLoader)
-    print("Read successful")
+with open("preprocess_config.yaml", "r") as yamlfile:
+    try:
+        data = yaml.load(yamlfile, Loader=yaml.SafeLoader)
+        print("Read successful")
+    except:
+        print("Failed to load config")
+        pass
 
 directory = data['folder_location']
+
+#create subfolder for preprocessed frames
+preprocess_directory = os.path.join(directory, 'preprocessing')
+if not os.path.exists(preprocess_directory):
+    os.makedirs(preprocess_directory)
 
 is_zoom = (data['preprocessing']['zoom']['is_on'])
 zoom_factor = (data['preprocessing']['zoom']['zoom_factor'])
@@ -27,6 +36,10 @@ rotation_degree = (data['preprocessing']['rotation']['rotation_degree'])
 
 is_shearing = (data['preprocessing']['shearing']['is_on'])
 shear_pixel_displacement = (data['preprocessing']['shearing']['shear_pixel_displacement'])
+
+#initialize dictionary to store transformation values
+dict_transforms = {}
+
 
 # FUNCTIONS
 # SCALING/ZOOM
@@ -83,24 +96,26 @@ for filename in os.listdir(directory):
         img_height = img.shape[0]
         img_width = img.shape[1]
 
+        print("Transforming " + filename)
+
         if is_zoom==True:
             img = zoom(img, zoom_factor)
-            print('zooming')
+            dict_transforms['Z'] = zoom_factor
         if is_brightness==True:
             img = brightness(img, brightness_factor)
             img = np.array(img)
-            print('brightening')
+            dict_transforms['B'] = brightness_factor
         if is_translation == True:
             img = translation(img, translation_coord)
-            print('tranlslating')
+            dict_transforms['T'] = translation_coord
         if is_rotation == True:
             img = rotation(img, rotation_degree)
-            print('rotating')
+            dict_transforms['R'] = rotation_degree
         if is_shearing==True:
             img = shearing(img, shear_pixel_displacement)
-            print('shearing')
+            dict_transforms['S'] = shear_pixel_displacement
 
-        save_directory = os.path.join(directory,'preprocessed')
+        save_directory = os.path.join(preprocess_directory, str(dict_transforms))
         if not os.path.exists(save_directory):
             os.makedirs(save_directory)
 
@@ -109,12 +124,6 @@ for filename in os.listdir(directory):
 
     else:
         continue
-# MAIN
-# if __name__ == '__main__':
-#     print(args)
-#     if (args.z):
-#         img = zoom()
-#     if (args.b):
-#         img = brightness()
-#
-#     img.save(args.out)
+
+print("Finished Preprocessing")
+

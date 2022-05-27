@@ -1,1 +1,0 @@
-# Deeplabcut-sheep-kinematics
